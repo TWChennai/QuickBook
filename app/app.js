@@ -11,9 +11,6 @@ var configUtil = require('./configUtil');
 
 var routes = require('./routes/rooms');
 
-//var mongo = require('mongodb');
-//var monk = require('monk');
-
 var app = express();
 
 app.use(cors());
