@@ -5,6 +5,8 @@ var jigsaw = require('./jigsaw');
 var calendar = google.calendar('v3');
 var configUtil = require('../configUtil');
 var config = JSON.parse(configUtil.parseConfig(process.env.rooms));
+var defaultOffice = process.env.defaultOffice;
+var QuickBookCalendar = process.env.QuickBookCalendar;
 var request = require('request');
 var util = require('util');
 
@@ -13,7 +15,7 @@ moment.tz.setDefault("Asia/Kolkata");
 function getStatus(room, callback) {
     calendar.events.list({
         auth: token.getToken(),
-        calendarId: config[room],
+        calendarId: config[defaultOffice][room],
         timeMin: (new Date()).toISOString(),
         maxResults: 1,
         singleEvents: true,
@@ -37,7 +39,7 @@ function getStatus(room, callback) {
             var event = events[0];
             var start = event.start.dateTime || event.start.date;
             var end = event.end.dateTime || event.end.date;
-            var isQuickBookMeeting = (event.organizer.email === config['QuickBook-Calendar']);
+            var isQuickBookMeeting = (event.organizer.email === QuickBookCalendar);
             var roomDetails = {
                 creator: event.creator.email,
                 summary: event.summary,
@@ -67,7 +69,7 @@ var constructCalendarEvent = function (empId, eventDetails, creatorMailId) {
             'timeZone': 'UTC+5:30'
         },
         'attendees': [
-            {'email': config[eventDetails.room]},
+            {'email': config[defaultOffice][eventDetails.room]},
             {'email': creatorMailId}
         ],
         'reminders': {
@@ -100,7 +102,7 @@ var createEventIfValid = function (eventDetails, onSuccess) {
     var event = constructCalendarEvent(empId, eventDetails, creatorMailId);
     calendar.events.insert({
         auth: token.getToken(),
-        calendarId: config['QuickBook-Calendar'],
+        calendarId: QuickBookCalendar,
         resource: event
     }, function (err, event) {
         if (err) {
@@ -127,7 +129,7 @@ var createEventIfValid = function (eventDetails, onSuccess) {
 function deleteEvent(eventId, callback) {
     calendar.events.delete({
         auth: token.getToken(),
-        calendarId: config['QuickBook-Calendar'],
+        calendarId: QuickBookCalendar,
         eventId: eventId
     }, function (err) {
         if (err) {
