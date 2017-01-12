@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var room = require('../models/room');
+var configUtil = require('../configUtil.js');
 
 router.get('/:room/status', function(req, res) {
 
@@ -37,6 +38,10 @@ router.get('/:officeName/rooms', function (req, res) {
   }
   var officeName = req.params.officeName;
   room.getListOfRoomsInTheOffice(officeName, writeAsJson);
+});
+
+router.get('/offices', function (req, res) {
+  res.json(configUtil.parseAsArray(process.env.offices));
 });
 
 router.get('/', function(req, res) {
