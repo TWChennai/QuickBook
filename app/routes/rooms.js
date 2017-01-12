@@ -30,7 +30,7 @@ router.post('/end-quick-book-meeting', function(req, res) {
   room.deleteEvent(req.body.eventId, writeAsJson);
 });
 
-router.get('/rooms/:officeName', function (req, res) {
+router.get('/:officeName/rooms', function (req, res) {
 
   function writeAsJson(roomList) {
     res.json(roomList)
