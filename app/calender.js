@@ -1,49 +1,39 @@
-var fs = require('fs');
-var readline = require('readline');
-var google = require('googleapis');
-var googleAuth = require('google-auth-library');
-var path = require('path');
-var configUtil = require('./configUtil');
-var token;
+const google = require('googleapis'),
+  googleAuth = require('google-auth-library'),
+  path = require('path'),
+  config = require(path.resolve('config'));
 
-function doAuthentication() {
-    var clientSecret = process.env.client_secret;
-    var clientId = process.env.client_id;
-    var redirectUrl = process.env.redirect_uri;
-    var auth = new googleAuth();
-    var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+class Calender {
+  constructor(token) {
+    this.token = token
+  }
 
-
-    if (!token) {
-        oauth2Client.credentials = JSON.parse(configUtil.parseConfig(process.env.token));
-        setToken(oauth2Client);
-    } else {
-        oauth2Client.credentials = JSON.parse(getToken());
-        setToken(oauth2Client);
-    }
-}
-
-function getNewToken(oauth2Client, callback) {
-    oauth2Client.getToken(process.env.appCode, function (err, token) {
-        if (err) {
-            console.log('Error while trying to retrieve access token', err);
-            return;
-        }
-        oauth2Client.credentials = token;
-        callback(oauth2Client);
+  _getNewToken(oauth2Client, callback) {
+    oauth2Client.getToken(config.google.appCode, function(err, token) {
+      if (err) {
+        console.log('Error while trying to retrieve access token', err);
+        return;
+      }
+      oauth2Client.credentials = this.token;
+      callback(oauth2Client);
     });
+  }
+
+  getToken() {
+    token.getAccessToken(function() {});
+    return this.token;
+  }
 }
 
-function setToken(key) {
-    token = key;
-}
+var doAuthentication = function() {
+  var clientSecret = config.google.client_secret;
+  var clientId = config.google.client_id;
+  var redirectUrl = config.google.redirect_uri;
+  var auth = new googleAuth();
+  var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
-function getToken() {
-    token.getAccessToken(function () {});
-    return token;
-}
-
-module.exports = {
-    getToken: getToken,
-    doAuthentication: doAuthentication
+  oauth2Client.credentials = config.google.token;
+  return new Calender(oauth2Client)
 };
+
+module.exports = doAuthentication();
