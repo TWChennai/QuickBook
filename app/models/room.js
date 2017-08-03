@@ -4,13 +4,14 @@ const google = require('googleapis'),
   request = require('request'),
   util = require('util');
 
-let token = require(path.resolve('app/calender')),
+let token = require(path.resolve('app/models/googleToken')),
   jigsaw = require(path.resolve('app/models/jigsaw')),
   calendar = google.calendar('v3'),
   config = require(path.resolve('config')),
   defaultOffice = config.defaultOffice,
   rooms = config.rooms[defaultOffice],
   QuickBookCalendar = config.QuickBookCalendar;
+
 moment.tz.setDefault("Asia/Kolkata");
 
 function getStatus(room, callback) {

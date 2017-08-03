@@ -3,7 +3,7 @@ const google = require('googleapis'),
   path = require('path'),
   config = require(path.resolve('config'));
 
-class Calender {
+class GoogleToken {
   constructor(token) {
     this.token = token
   }
@@ -33,7 +33,7 @@ var doAuthentication = function() {
   var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
   oauth2Client.credentials = config.google.token;
-  return new Calender(oauth2Client)
+  return new GoogleToken(oauth2Client)
 };
 
 module.exports = doAuthentication();
