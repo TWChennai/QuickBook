@@ -1,23 +1,33 @@
-const google = require('googleapis'),
+const path = require('path'),
+  googleCalendar = require('googleapis').calendar,
   moment = require('moment-timezone'),
-  path = require('path'),
-  request = require('request'),
-  util = require('util');
+  mongoose = require('mongoose'),
+  request = require('request');
 
 let token = require(path.resolve('app/models/googleToken')),
-  jigsaw = require(path.resolve('app/models/jigsaw')),
-  calendar = google.calendar('v3'),
-  config = require(path.resolve('config')),
-  defaultOffice = config.defaultOffice,
-  rooms = config.rooms[defaultOffice],
-  QuickBookCalendar = config.QuickBookCalendar;
+  calendar = googleCalendar('v3'),
+  jigsaw = require(path.resolve('app/models/jigsaw'));
 
-moment.tz.setDefault("Asia/Kolkata");
+let {QuickBookCalendar} = require(path.resolve('config'));
 
-function getStatus(room, callback) {
+mongoose.Promise = global.Promise;
+
+var roomSchema = new mongoose.Schema({
+  name: String,
+  capacity: Number,
+  calendarId: String,
+  office: String,
+  images: {
+    booked_url: String,
+    available_url: String
+  }
+});
+
+roomSchema.methods.getStatus = function(callback) {
+  let calendarId = this.calendarId;
   calendar.events.list({
     auth: token.getToken(),
-    calendarId: rooms[room],
+    calendarId: calendarId,
     timeMin: (new Date()).toISOString(),
     maxResults: 1,
     singleEvents: true,
@@ -57,23 +67,25 @@ function getStatus(room, callback) {
   });
 }
 
-var constructCalendarEvent = function(empId, eventDetails, creatorMailId) {
+roomSchema.methods.constructCalendarEvent = function(empId, duration, creatorMailId) {
+  let calendarId = this.calendarId;
+  let room = this.name;
   return {
     'summary': ''.concat('QuickBook Instant Meeting -  ', empId),
-    'location': eventDetails.room,
+    'location': room,
     'description': 'Instant meeting booked with QuickBook',
     'start': {
       'dateTime': moment().format(),
       'timeZone': 'UTC+5:30'
     },
     'end': {
-      'dateTime': moment().add(eventDetails.duration, 'minutes').format(),
+      'dateTime': moment().add(duration, 'minutes').format(),
       'timeZone': 'UTC+5:30'
     },
-    'attendees': [{
-        'email': rooms[eventDetails.room]
-      },
+    'attendees': [
       {
+        'email': calendarId
+      }, {
         'email': creatorMailId
       }
     ],
@@ -81,30 +93,12 @@ var constructCalendarEvent = function(empId, eventDetails, creatorMailId) {
       'useDefault': true
     }
   };
-};
-
-
-function createEvent(eventDetails, onEventCreated) {
-  request(jigsaw.getPeopleUrl(eventDetails.employeeId), function(error, response, body) {
-    if (!error && response.statusCode == 200) {
-      createEventIfValid(eventDetails, onEventCreated);
-    }
-    if (response.statusCode == 404) {
-      onEventCreated({
-        isValid: false,
-        errors: {
-          employeeId: 'employee id not found'
-        }
-      })
-    }
-  })
 }
 
-
-var createEventIfValid = function(eventDetails, onSuccess) {
-  var empId = eventDetails.employeeId;
-  var creatorMailId = ''.concat(empId, '@', 'thoughtworks.com');
-  var event = constructCalendarEvent(empId, eventDetails, creatorMailId);
+roomSchema.methods.createEventIfValid = function(eventDetails, onSuccess) {
+  var {employeeId, duration} = eventDetails;
+  var creatorMailId = ''.concat(employeeId, '@', 'thoughtworks.com');
+  var event = this.constructCalendarEvent(employeeId, duration, creatorMailId);
   calendar.events.insert({
     auth: token.getToken(),
     calendarId: QuickBookCalendar,
@@ -120,7 +114,9 @@ var createEventIfValid = function(eventDetails, onSuccess) {
       summary: event.summary,
       creator: creatorMailId,
       eventId: event.id,
-      status: moment().isAfter(start) ? 'booked' : 'available',
+      status: moment().isAfter(start)
+        ? 'booked'
+        : 'available',
       start: start,
       end: end,
       isValid: true,
@@ -128,10 +124,27 @@ var createEventIfValid = function(eventDetails, onSuccess) {
     };
     onSuccess(roomDetails);
   });
-};
+}
 
+roomSchema.methods.createEvent = function(eventDetails, onEventCreated) {
+  var self = this;
+  request(jigsaw.getPeopleUrl(eventDetails.employeeId), function(error, response, body) {
+    if (!error && response.statusCode == 200) {
+      console.log(self);
+      self.createEventIfValid(eventDetails, onEventCreated);
+    }
+    if (response.statusCode == 404) {
+      onEventCreated({
+        isValid: false,
+        errors: {
+          employeeId: 'employee id not found'
+        }
+      })
+    }
+  })
+}
 
-function deleteEvent(eventId, callback) {
+roomSchema.methods.deleteEvent = function(eventId, callback) {
   calendar.events.delete({
     auth: token.getToken(),
     calendarId: QuickBookCalendar,
@@ -143,16 +156,6 @@ function deleteEvent(eventId, callback) {
     }
     callback();
   });
-
 }
 
-function getListOfRoomsInTheOffice(officeName, callback) {
-  callback(Object.keys(rooms));
-}
-
-module.exports = {
-  getStatus: getStatus,
-  createEvent: createEvent,
-  deleteEvent: deleteEvent,
-  getListOfRoomsInTheOffice: getListOfRoomsInTheOffice
-};
+module.exports = mongoose.model('Room', roomSchema);
