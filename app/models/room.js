@@ -25,6 +25,7 @@ var roomSchema = new mongoose.Schema({
 
 roomSchema.methods.getStatus = function(callback) {
   let calendarId = this.calendarId;
+  var self = this;
   calendar.events.list({
     auth: token.getToken(),
     calendarId: calendarId,
@@ -35,6 +36,10 @@ roomSchema.methods.getStatus = function(callback) {
     timeZone: 'UTC+5:30'
   }, function(err, response) {
     if (err) {
+      if(err.code == 401){
+        token.refreshAccessToken();
+        return self.getStatus(callback);
+      }
       console.log('The API returned an error: ' + err);
       return;
     }
@@ -130,7 +135,6 @@ roomSchema.methods.createEvent = function(eventDetails, onEventCreated) {
   var self = this;
   request(jigsaw.getPeopleUrl(eventDetails.employeeId), function(error, response, body) {
     if (!error && response.statusCode == 200) {
-      console.log(self);
       self.createEventIfValid(eventDetails, onEventCreated);
     }
     if (response.statusCode == 404) {

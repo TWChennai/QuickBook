@@ -13,6 +13,7 @@ router.get('/:room/status', function(req, res, next) {
 router.post('/:room/book', function(req, res) {
   var roomName = req.params.room;
   Room.findOne({name: roomName}).then((room) => {
+
     room.createEvent(req.body, writeAsJson(res));
   })
 });

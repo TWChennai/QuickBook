@@ -20,8 +20,12 @@ class GoogleToken {
   }
 
   getToken() {
-    token.getAccessToken(function() {});
+    this.token.getAccessToken(function() {});
     return this.token;
+  }
+
+  refreshAccessToken() {
+    this.token.refreshAccessToken(() => {});
   }
 }
 
