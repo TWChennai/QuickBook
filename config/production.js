@@ -1,24 +1,24 @@
 module.exports = {
-  QuickBookCalendar: '<quickBookCalendar-id>',
+  QuickBookCalendar: process.env.calendarId,
   whitelistedIps: [],
   google: {
-    "client_id": "<client_id>",
-    "project_id": "<project_id>",
-    "appCode": "<application-code>",
-    "client_secret": "<client_secret>",
-    "redirect_uri": 'https://quickbook.localtunnel.me',
+    "client_id": process.env.client_id,
+    "project_id": process.env.project_id,
+    "appCode": process.env.application_code,
+    "client_secret": process.env.client_secret,
+    "redirect_uri": process.env.redirect_uri,
     "token": {
-      "access_token": "<access_token>",
+      "access_token": process.env.access_token,
       "token_type": "Bearer",
       "expires_in": 3600,
-      "refresh_token": "<refresh_token>"
+      "refresh_token": process.env.refresh_token
     }
   },
   jigsaw: {
-    authorizationCode : '<authorizationCode>'
+    authorizationCode : process.env.authorizationCode
   },
   db: {
     room: 'rooms',
-    url: 'mongodb://localhost/quickbook'
+    url: process.env.db_url
   }
 }

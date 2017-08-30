@@ -29,13 +29,9 @@ router.get('/', function(req, res) {
   Room.find().then(writeAsJson(res));
 });
 
-router.post('/create', function(req, res) {
-  var room = new Room(req.body);
-  room.save(function(err, fluffy) {
-    if (err)
-      return console.error(err);
-    res.json(fluffy);
-  });
+router.post('/create', (req, res) => {
+  req.body.forEach((room) => new Room(room).save((err, fluffy) => err ? err : fluffy));
+  res.json('ok');
 });
 
 var writeAsJson = function(res) {

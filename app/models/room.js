@@ -56,16 +56,15 @@ roomSchema.methods.getStatus = function(callback) {
       var event = events[0];
       var start = event.start.dateTime || event.start.date;
       var end = event.end.dateTime || event.end.date;
-      var isQuickBookMeeting = (event.organizer.email === QuickBookCalendar);
       var roomDetails = {
-        creator: event.creator.email,
+        creator: event.creator ? event.creator.email : null,
         summary: event.summary,
         eventId: event.id,
-        organizerName: event.organizer.displayName,
+        organizerName: event.organizer ? event.organizer.displayName : null,
         status: moment().isAfter(start) ? 'booked' : 'available',
         start: start,
         end: end,
-        isQuickBookMeeting: isQuickBookMeeting
+        isQuickBookMeeting: event.organizer && event.organizer.email === QuickBookCalendar
       };
       callback(roomDetails)
     }
