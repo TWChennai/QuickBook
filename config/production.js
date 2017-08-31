@@ -1,6 +1,6 @@
 module.exports = {
   QuickBookCalendar: process.env.calendarId,
-  whitelistedIps: [],
+  whitelistedIps: JSON.parse(process.env.whitelistedIps),
   google: {
     "client_id": process.env.client_id,
     "project_id": process.env.project_id,
